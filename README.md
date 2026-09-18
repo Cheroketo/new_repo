@@ -1,35 +1,111 @@
+# ML Integration Lab 1 — Классификация Iris
+
+Учебный проект по инженерной организации ML-кода: от исследовательского notebook до воспроизводимого пайплайна с обучением, инференсом и тестами.
+
+---
+
 ## Цель проекта
 
-Учебный проект для отработки инженерной организации ML-кода. Модель классифицирует цветы Iris по четырем признакам.
+Отработка практик промышленной разработки ML-кода на примере классической задачи — предсказания вида цветка Iris по четырём признакам (длина/ширина чашелистика и лепестка). Модель решает задачу мультиклассовой классификации на 3 класса.
 
-## Исходная заготовка
+---
 
-Исходный код взят из файла `starter_ml.ipynb` — исследовательского notebook с датасетом Iris. Очищенная копия сохранена в `notebooks/source_experiment.ipynb`.
+## Что внутри
+
+- **Источник:** исследовательский notebook `starter_ml.ipynb`, очищенная копия — `notebooks/source_experiment.ipynb`.
+- **Пайплайн:** отдельные скрипты для обучения (`train.py`) и инференса (`predict.py`).
+- **Артефакты:** сохранённая модель `models/model.pkl` и тестовый сэмпл `data_sample/sample.csv`.
+- **Проверка:** автотесты на корректность предсказаний в `tests/`.
+
+---
 
 ## Структура проекта
 
-```text
+```
 ml-integration-lab1/
-├── README.md              # Документация проекта
-├── .gitignore             # Исключения для Git
-├── requirements.txt       # Зависимости Python
+├── README.md                      # Документация проекта
+├── .gitignore                     # Исключения для Git
+├── requirements.txt               # Зависимости Python
 ├── notebooks/
-│   └── source_experiment.ipynb  # Исходный notebook
+│   └── source_experiment.ipynb    # Исходный notebook
 ├── data_sample/
-│   └── sample.csv         # Тестовые данные
+│   └── sample.csv                 # Тестовые данные
 ├── models/
-│   └── model.pkl          # Обученная модель
+│   └── model.pkl                  # Обученная модель
 ├── src/
-│   ├── train.py           # Скрипт обучения
-│   └── predict.py         # Скрипт предсказания
+│   ├── train.py                   # Скрипт обучения
+│   └── predict.py                 # Скрипт предсказания
 └── tests/
-    └── test_predict.py    # Тесты
+    └── test_predict.py            # Тесты
+```
 
-# Инструкция по запуску проекта
-1. Клонируем репозиторий к себе на компьютер: clone https://github.com
-2. Создаем и активируем изолированное виртуальное окружение:Если у вас macOS / Linux:bashpython3 -m venv .venv
-source .venv/bin/activate(После этого в начале строки терминала должна загореться плашка (.venv))
-3. Устанавливаем все необходимые библиотеки:pip install -r requirements.txt
-4. Запуск и проверка модулей проекта:Обучение модели: Обучаем классификатор и сохраняем веса команды:python src/train.py
-Запуск предсказания: Делаем инференс по тестовым данным из data_sample/sample.csv:python src/predict.py
-Запуск тестов: Проверяем корректность работы интеграции (требуется pytest, который установился из requirements):pytest tests/test_predict.py
+---
+
+## 🚀 Инструкция по запуску
+
+### 1. Клонирование репозитория
+
+```bash
+git clone https://github.com/Cheroketo/new_repo.git
+cd ml-integration-lab1
+```
+
+### 2. Создание и активация виртуального окружения
+
+**macOS / Linux:**
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+**Windows:**
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+```
+
+> После активации в начале строки терминала появится плашка `(.venv)`.
+
+### 3. Установка зависимостей
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Запуск и проверка модулей
+
+**Обучение модели** — обучаем классификатор и сохраняем веса:
+
+```bash
+python src/train.py
+```
+
+**Инференс** — предсказание по данным из `data_sample/sample.csv`:
+
+```bash
+python src/predict.py
+```
+
+**Тесты** — проверка корректности интеграции:
+
+```bash
+pytest tests/test_predict.py
+```
+
+---
+
+## Стек
+
+Python · scikit-learn · pandas · numpy · pytest
+
+---
+
+## Ключевые инженерные решения
+
+| Практика | Реализация |
+|---|---|
+| Воспроизводимость | фиксированный `random_state`, `requirements.txt` |
+| Разделение кода | `train.py` / `predict.py` вместо монолитного notebook |
+| Изоляция окружения | `.venv` + `.gitignore` |
+| Тестируемость | отдельный модуль `tests/` с pytest |
+| Персистентность модели | сериализация в `models/model.pkl` |
