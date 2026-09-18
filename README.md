@@ -25,4 +25,11 @@ ml-integration-lab1/
 └── tests/
     └── test_predict.py    # Тесты
 
-
+# Инструкция по запуску проекта
+1. Клонируем репозиторий к себе на компьютер: clone https://github.com
+2. Создаем и активируем изолированное виртуальное окружение:Если у вас macOS / Linux:bashpython3 -m venv .venv
+source .venv/bin/activate(После этого в начале строки терминала должна загореться плашка (.venv))
+3. Устанавливаем все необходимые библиотеки:pip install -r requirements.txt
+4. Запуск и проверка модулей проекта:Обучение модели: Обучаем классификатор и сохраняем веса команды:python src/train.py
+Запуск предсказания: Делаем инференс по тестовым данным из data_sample/sample.csv:python src/predict.py
+Запуск тестов: Проверяем корректность работы интеграции (требуется pytest, который установился из requirements):pytest tests/test_predict.py
