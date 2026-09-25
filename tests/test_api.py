@@ -51,3 +51,22 @@ def test_openapi_available():
     spec = response.json()
     assert "/predict" in spec["paths"]
     assert "/health" in spec["paths"]
+
+
+
+def test_health_degraded_when_model_missing(monkeypatch):
+    """Если модель недоступна — status=degraded, model_ready=false."""
+    from src import model_service
+
+    model_service._load_model.cache_clear()
+
+    def raise_fnf(*args, **kwargs):
+        raise FileNotFoundError("no model")
+
+    monkeypatch.setattr(model_service, "_load_model", raise_fnf)
+
+    response = client.get("/health")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "degraded"
+    assert body["model_ready"] is False

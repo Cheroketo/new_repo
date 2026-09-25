@@ -1,6 +1,6 @@
 """FastAPI-приложение: HTTP-интерфейс над ML-моделью."""
 from fastapi import FastAPI, HTTPException
-
+from src import model_service
 from app.schemas import HealthResponse, PredictRequest, PredictResponse
 from src.model_service import (
     FEATURE_ORDER,
@@ -19,12 +19,16 @@ app = FastAPI(
 def health() -> HealthResponse:
     """Состояние сервиса и признак готовности модели."""
     try:
-        from src.model_service import _load_model
-        _load_model()
+        from src import model_service
+        model_service._load_model()
         model_ready = True
     except FileNotFoundError:
         model_ready = False
-    return HealthResponse(status="ok", model_ready=model_ready)
+
+    return HealthResponse(
+        status="ok" if model_ready else "degraded",
+        model_ready=model_ready,
+    )
 
 
 @app.post("/predict", response_model=PredictResponse, tags=["ml"])
