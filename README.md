@@ -152,6 +152,48 @@ MODEL_PATH=artifacts/model.pkl python src/predict.py
 ```bash
 pytest tests/test_predict.py -v
 ```
+## 🌐 API-сервис (FastAPI)
+
+### Запуск
+
+```bash
+pip install -r requirements.txt
+python src/train.py                          # обучить модель
+python -m uvicorn app.api:app --reload       # запустить сервис
+```
+
+Сервис доступен на `http://127.0.0.1:8000`.
+
+### Маршруты
+
+| Метод | Путь | Описание |
+|---|---|---|
+| GET | `/health` | Состояние сервиса и готовность модели |
+| POST | `/predict` | Предсказание вида Iris |
+| GET | `/docs` | Swagger UI |
+| GET | `/openapi.json` | OpenAPI-схема |
+
+### Пример запроса
+
+```bash
+curl -X POST http://127.0.0.1:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{"sepal_length":5.1,"sepal_width":3.5,"petal_length":1.4,"petal_width":0.2}'
+```
+
+### Пример ответа
+
+```json
+{"prediction": 0, "class_name": "setosa"}
+```
+
+### Ограничения учебной модели
+
+- Обучена на встроенном датасете Iris, применима только к 3 видам.
+- Модель загружается один раз при старте и кэшируется — при обновлении `.pkl` нужен перезапуск сервиса.
+- Путь к модели задаётся через env `MODEL_PATH`.
+
+
 
 ## Лицензия
 
