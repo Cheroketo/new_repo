@@ -110,6 +110,7 @@ Python · scikit-learn · pandas · numpy · pytest
 | Тестируемость | отдельный модуль `tests/` с pytest |
 | Персистентность модели | сериализация в `models/model.pkl` |
 
+
 ## Конфигурация
 
 Параметры запуска задаются **аргументами CLI** или **переменными окружения**.
@@ -151,3 +152,7 @@ MODEL_PATH=artifacts/model.pkl python src/predict.py
 ```bash
 pytest tests/test_predict.py -v
 ```
+
+## Лицензия
+
+Учебный проект, распространяется свободно.
