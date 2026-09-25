@@ -1,6 +1,6 @@
 """Pydantic-схемы запроса и ответа для API."""
 from pydantic import BaseModel, Field
-
+from typing import Literal
 
 class PredictRequest(BaseModel):
     sepal_length: float = Field(gt=0, description="Длина чашелистика, см")
@@ -28,5 +28,5 @@ class PredictResponse(BaseModel):
 
 
 class HealthResponse(BaseModel):
-    status: str
+    status: Literal["ok", "degraded"]
     model_ready: bool
