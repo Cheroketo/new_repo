@@ -42,9 +42,18 @@ def main():
     args = parse_args()
 
     # Загрузка модели
+    if not os.path.exists(args.model):
+        raise FileNotFoundError(
+            f"Модель не найдена: {args.model}. "
+            f"Сначала обучите её: python src/train.py --output {args.model}"
+        )
     model = joblib.load(args.model)
 
     # Загрузка тестовых данных
+    if not os.path.exists(args.sample):
+        raise FileNotFoundError(
+            f"Файл с данными не найден: {args.sample}"
+        )
     with open(args.sample, encoding="utf-8", newline="") as sample_file:
         row = next(csv.DictReader(sample_file))
 
