@@ -152,7 +152,7 @@ MODEL_PATH=artifacts/model.pkl python src/predict.py
 ```bash
 pytest tests/test_predict.py -v
 ```
-## 🌐 API-сервис (FastAPI)
+## API-сервис (FastAPI)
 
 ### Запуск
 
@@ -163,6 +163,26 @@ python -m uvicorn app.api:app --reload       # запустить сервис
 ```
 
 Сервис доступен на `http://127.0.0.1:8000`.
+
+## Уровни тестирования
+
+| Уровень | Файл | Что проверяет |
+|---|---|---|
+| Модульные тесты | `tests/test_model_service.py` | Логика без HTTP: `predict_one`, `predict_class_name`, кэш модели |
+| API-тесты | `tests/test_api.py` | Маршруты `/health`, `/predict` через `TestClient` |
+| Негативные тесты | `tests/test_api.py` | Отсутствующее поле → 422, отрицательное значение → 422 |
+| Интеграционный тест | `tests/test_api.py::test_integration_real_model_predicts_setosa` | Сервис + реальный `models/model.pkl` |
+| Тесты конфигурации | `tests/test_predict.py` | CLI-аргументы и env-переменные `predict.py` / `train.py` |
+
+### Запуск
+
+```bash
+pytest                    # все тесты
+pytest -v                 # с деталями
+pytest tests/test_api.py -v          # только API-тесты
+pytest tests/test_model_service.py -v  # только модульные
+```
+
 
 ### Маршруты
 
