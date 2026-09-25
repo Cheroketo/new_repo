@@ -110,6 +110,49 @@ Python · scikit-learn · pandas · numpy · pytest
 | Тестируемость | отдельный модуль `tests/` с pytest |
 | Персистентность модели | сериализация в `models/model.pkl` |
 
+
+## Конфигурация
+
+Параметры запуска задаются **аргументами CLI** или **переменными окружения**.
+
+### `src/train.py`
+
+| Аргумент | Env | По умолчанию | Описание |
+|---|---|---|---|
+| `--output` | `MODEL_PATH` | `models/model.pkl` | Куда сохранить обученную модель |
+| `--test-size` | — | `0.25` | Доля тестовой выборки |
+| `--random-state` | — | `42` | Seed для воспроизводимости |
+
+Пример:
+
+```bash
+python src/train.py --output artifacts/model.pkl --test-size 0.3
+```
+
+### `src/predict.py`
+
+| Аргумент | Env | По умолчанию | Описание |
+|---|---|---|---|
+| `--model` | `MODEL_PATH` | `models/model.pkl` | Путь к обученной модели |
+| `--sample` | `SAMPLE_PATH` | `data_sample/sample.csv` | Путь к CSV с признаками |
+| `--format` | `OUTPUT_FORMAT` | `plain` | Формат вывода: `plain` или `csv` |
+
+Примеры:
+
+```bash
+# через CLI
+python src/predict.py --model artifacts/model.pkl --format csv
+
+# через переменную окружения
+MODEL_PATH=artifacts/model.pkl python src/predict.py
+```
+
+### Проверка
+
+```bash
+pytest tests/test_predict.py -v
+```
+
 ## Лицензия
 
 Учебный проект, распространяется свободно.
