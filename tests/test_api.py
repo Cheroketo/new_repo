@@ -70,3 +70,26 @@ def test_health_degraded_when_model_missing(monkeypatch):
     body = response.json()
     assert body["status"] == "degraded"
     assert body["model_ready"] is False
+
+
+def test_integration_real_model_predicts_setosa():
+    """Интеграционный тест это сервис + реальная сохранённая модель.
+    Проверяет, что /predict действительно использует models/model.pkl,а не заглушку.
+    """
+    from src import model_service
+
+    model_service._load_model.cache_clear()
+
+    payload = {
+        "sepal_length": 5.1,
+        "sepal_width": 3.5,
+        "petal_length": 1.4,
+        "petal_width": 0.2,
+    }
+    response = client.post("/predict", json=payload)
+    assert response.status_code == 200
+    body = response.json()
+
+    # конкретный ожидаемый класс , что модель реально работает
+    assert body["prediction"] == 0
+    assert body["class_name"] == "setosa"
