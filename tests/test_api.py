@@ -28,21 +28,22 @@ def test_predict_valid_input():
     assert body["class_name"] == "setosa"
 
 
-def test_predict_rejects_negative_values():
-    payload = {
-        "sepal_length": -1,
-        "sepal_width": 3.5,
-        "petal_length": 1.4,
-        "petal_width": 0.2,
-    }
-    response = client.post("/predict", json=payload)
-    assert response.status_code == 422
-
-
 def test_predict_rejects_missing_field():
-    payload = {"sepal_length": 5.1}  # нет трёх полей
+    payload = {"sepal_length": 5.1, "sepal_width": 3.5, "petal_length": 1.4}
     response = client.post("/predict", json=payload)
     assert response.status_code == 422
+    detail = response.json()["detail"]
+    assert any(err["type"] == "missing" for err in detail)
+    assert any(err["loc"][-1] == "petal_width" for err in detail)
+
+
+def test_predict_rejects_negative_values():
+    payload = {"sepal_length": -1, "sepal_width": 3.5,
+               "petal_length": 1.4, "petal_width": 0.2}
+    response = client.post("/predict", json=payload)
+    assert response.status_code == 422
+    detail = response.json()["detail"]
+    assert any(err["type"] == "greater_than" for err in detail)
 
 
 def test_openapi_available():
