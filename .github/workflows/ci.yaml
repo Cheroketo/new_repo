@@ -43,6 +43,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          fetch-depth: 0
+
+      - name: Debug workspace
+        run: |
+          echo "=== Workspace ==="
+          pwd
+          ls -la
+          echo "=== requirements.txt ==="
+          test -f requirements.txt && echo "OK" || echo "MISSING"
+          echo "=== .dockerignore ==="
+          cat .dockerignore
 
       - name: Build image with Kaniko
         uses: docker://gcr.io/kaniko-project/executor:v1.24.0
