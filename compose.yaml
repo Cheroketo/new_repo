@@ -1,0 +1,39 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ml-api:practice6
+    ports:
+      - "8080:8000"
+    environment:
+      MODEL_PATH: /app/models/model.pkl
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - app_net
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    image: ml-client:practice6
+    environment:
+      API_URL: http://api:8000
+      RESULT_PATH: /results/prediction.json
+    depends_on:
+      api:
+        condition: service_healthy
+    volumes:
+      - ./results:/results
+    networks:
+      - app_net
+    restart: "no"
+
+networks:
+  app_net:
+    driver: bridge

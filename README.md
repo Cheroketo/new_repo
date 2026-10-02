@@ -158,8 +158,8 @@ pytest tests/test_predict.py -v
 
 ```bash
 pip install -r requirements.txt
-python src/train.py                          # обучить модель
-python -m uvicorn app.api:app --reload       # запустить сервис
+python src/train.py                         
+python -m uvicorn app.api:app --reload     
 ```
 
 Сервис доступен на `http://127.0.0.1:8000`.
@@ -213,6 +213,100 @@ curl -X POST http://127.0.0.1:8000/predict \
 - Модель загружается один раз при старте и кэшируется — при обновлении `.pkl` нужен перезапуск сервиса.
 - Путь к модели задаётся через env `MODEL_PATH`.
 
+## Docker
+
+### Сборка и запуск
+
+```bash
+docker build -t ml-api:practice5 .
+docker run -d --name ml-api-p5 -p 8080:8000 -e MODEL_PATH=/app/models/model.pkl ml-api:practice5
+```
+
+Порт `8080` хоста → порт `8000` контейнера. Внутри uvicorn слушает `0.0.0.0:8000`.
+
+### Проверка
+
+```bash
+curl -i http://localhost:8080/health
+curl -i -X POST http://localhost:8080/predict \
+  -H "Content-Type: application/json" \
+  -d '{"sepal_length":5.1,"sepal_width":3.5,"petal_length":1.4,"petal_width":0.2}'
+```
+
+### Диагностика и остановка
+
+```bash
+docker ps
+docker logs ml-api-p5
+docker exec ml-api-p5 ls -la /app
+docker stats --no-stream ml-api-p5
+
+docker stop ml-api-p5
+docker rm ml-api-p5
+```
+
+Модель в образе — снимок `models/model.pkl` на момент сборки. Обучение в Dockerfile не выполняется.
+
+---
+
+## Docker Compose
+
+Стенд из двух сервисов: `api` и `client`, соединённых bridge-сетью `app_net`. Результат сохраняется на хосте через bind mount.
+
+### Архитектура
+
+```
+Хост ──► localhost:8080/health ──► ┌──────────────┐
+                                    │     api      │ :8000
+                                    └───────┬──────┘
+                                            │ app_net
+                                            │ http://api:8000
+                                    ┌───────┴──────┐
+                                    │    client    │
+                                    └───────┬──────┘
+                                            │ bind mount
+                                            ▼
+                                    ./results/prediction.json
+```
+
+Внутри сети Compose сервисы видят друг друга по **именам сервисов** (DNS). Клиент использует `http://api:8000`, хост: `localhost:8080`.
+
+### Запуск и проверка
+
+```bash
+docker compose up --build -d
+docker compose ps -a 
+docker compose logs api
+docker compose logs client
+curl -i http://localhost:8080/health
+cat results/prediction.json
+# → {"prediction": 0, "class_name": "setosa"}
+```
+
+### Ошибка localhost
+
+Внутри `client` `localhost` — это сам client, а не api-контейнер.
+
+```bash
+# ОШИБКА ConnectionError
+docker compose run --rm -e API_URL=http://localhost:8000 client
+
+# ПРАВИЛЬНО
+docker compose run --rm client
+```
+
+### Остановка
+
+```bash
+docker compose down
+cat results/prediction.json   
+
+### Сервисы
+
+| Сервис | Контекст | Образ | Порты |
+|---|---|---|---|
+| `api` | `.` | `ml-api:practice6` | `8080:8000` |
+| `client` | `./client` | `ml-client:practice6` | — |
 
 
 ## Лицензия
