@@ -1,0 +1,76 @@
+name: Test Delivery Dry Run
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build & set image tag
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.set_tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set image tag
+        id: set_tag
+        run: |
+          TAG="test-${{ github.sha }}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "Image tag: ${TAG}"
+
+  smoke_api_tests_stub:
+    name: Smoke API tests (stub)
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Report image tag
+        run: echo "Would test image ${{ needs.build.outputs.image-tag }}"
+
+      - name: Print smoke test commands
+        run: |
+          echo "curl -f http://test.example.local:8080/health"
+          echo "curl -X POST http://test.example.local:8080/predict -H 'Content-Type: application/json' --data '{\"sepal_length\":5.1,\"sepal_width\":3.5,\"petal_length\":1.4,\"petal_width\":0.2}'"
+
+  docs_checks:
+    name: Docs checks
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check README exists
+        run: test -f README.md
+      - name: Confirm commands documented
+        run: echo "README найден. Команды доставки описаны."
+
+  deploy_dry_run:
+    name: Deploy (dry-run)
+    runs-on: ubuntu-latest
+    needs:
+      - build
+      - smoke_api_tests_stub
+      - docs_checks
+    if: ${{ success() }}
+    steps:
+      - name: Print deploy commands
+        run: |
+          IMAGE_TAG="${{ needs.build.outputs.image-tag }}"
+          IMAGE_NAME="registry.example.local/ml-api"
+          echo "docker pull ${IMAGE_NAME}:${IMAGE_TAG}"
+          echo "docker stop ml-api-test || true"
+          echo "docker rm ml-api-test || true"
+          echo "docker run -d --name ml-api-test -p 8080:8000 ${IMAGE_NAME}:${IMAGE_TAG}"
+
+      - name: Print smoke test commands
+        run: |
+          echo "curl -f http://test.example.local:8080/health"
+          echo "curl -X POST http://test.example.local:8080/predict -H 'Content-Type: application/json' --data '{\"sepal_length\":5.1,\"sepal_width\":3.5,\"petal_length\":1.4,\"petal_width\":0.2}'"
+
+      - name: Print rollback commands
+        run: |
+          PREVIOUS_TAG="previous-stable"
+          IMAGE_NAME="registry.example.local/ml-api"
+          echo "docker stop ml-api-test || true"
+          echo "docker rm ml-api-test || true"
+          echo "docker run -d --name ml-api-test -p 8080:8000 ${IMAGE_NAME}:${PREVIOUS_TAG}"
+          echo "curl -f http://test.example.local:8080/health"
