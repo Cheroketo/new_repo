@@ -309,6 +309,38 @@ cat results/prediction.json
 | `client` | `./client` | `ml-client:practice6` | — |
 
 
+##  CI/CD
+
+CI-конвейер работает в **GitHub Actions** — файл `.github/workflows/ci.yaml`.
+
+### События запуска
+
+| Событие | Условие |
+|---|---|
+| `push` | изменения в `main` (фильтр: `app/`, `src/`, `tests/`, `Dockerfile`, `requirements.txt`, `.github/workflows/`) |
+| `pull_request` | создание или обновление PR |
+| `workflow_dispatch` | вручную через UI GitHub |
+
+### Jobs
+
+| Job | Что делает | Длительность |
+|---|---|---|
+| **check** | Python 3.12, установка зависимостей, `python -m compileall app src`, `pytest -q` | ~30s |
+| **build-image** | после `check` — сборка Docker-образа через **Kaniko** (без docker.sock), `--no-push` | ~30s |
+
+`build-image` использует `needs: check` — не запускается, если тесты упали.
+
+### Локальная проверка перед push
+
+```bash
+pytest -q
+docker build -t ml-api:test .
+```
+
+### Ссылка на последний успешный запуск
+
+https://github.com/Cheroketo/new_repo/actions
+
 ## Лицензия
 
 Учебный проект, распространяется свободно.
