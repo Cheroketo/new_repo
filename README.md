@@ -341,6 +341,66 @@ docker build -t ml-api:test .
 
 https://github.com/Cheroketo/new_repo/actions
 
+## Delivery (CD) — dry run
+
+Второй workflow — `.github/workflows/delivery.yaml` — моделирует доставку сервиса **без реального сервера**. Все команды **печатаются в лог**, не выполняются.
+
+### Событие запуска
+
+Только вручную через `workflow_dispatch` в GitHub Actions:
+Actions → **Test Delivery Dry Run** → **Run workflow** → ветка `main`.
+
+### Jobs
+
+| Job | Что делает | Зависит от |
+|---|---|---|
+| **build** | Формирует тег `test-<sha>`, публикует через `outputs.image-tag` | — |
+| **smoke_api_tests_stub** | Печатает команды `curl /health`, `curl /predict` | build |
+| **docs_checks** | Проверяет наличие README | build |
+| **deploy_dry_run** | Печатает `docker pull / stop / rm / run`, smoke-команды и команды **rollback** | build + smoke + docs |
+
+`smoke_api_tests_stub` и `docs_checks` идут **параллельно**, `deploy_dry_run` ждёт **все три** через `needs`.
+
+### Заглушки
+
+- `registry.example.local/ml-api` — несуществующий registry.
+- `test.example.local:8080` — несуществующий тестовый сервер.
+- `PREVIOUS_TAG=previous-stable` — заглушка предыдущего проверенного тега.
+
+### Команды, которые выполнились бы при реальной доставке
+
+```bash
+docker pull registry.example.local/ml-api:test-<sha>
+docker stop ml-api-test || true
+docker rm ml-api-test || true
+docker run -d --name ml-api-test -p 8080:8000 registry.example.local/ml-api:test-<sha>
+curl -f http://test.example.local:8080/health
+curl -X POST http://test.example.local:8080/predict -H "Content-Type: application/json" --data '{"sepal_length":5.1,"sepal_width":3.5,"petal_length":1.4,"petal_width":0.2}'
+```
+
+### Откат
+
+При проблемах — вернуть предыдущий проверенный тег:
+
+```bash
+docker stop ml-api-test || true
+docker rm ml-api-test || true
+docker run -d --name ml-api-test -p 8080:8000 registry.example.local/ml-api:previous-stable
+curl -f http://test.example.local:8080/health
+```
+
+### Переход к реальной доставке
+
+Чтобы заменить dry run на реальный деплой:
+
+1. Развернуть тестовый сервер с Docker.
+2. Добавить секреты в GitHub: `DEPLOY_HOST`, `DEPLOY_USER`, `SSH_KEY`, `REGISTRY_TOKEN`.
+3. Заменить `echo` на реальные `ssh`-вызовы:
+   ```bash
+   ssh "$DEPLOY_USER@$DEPLOY_HOST" "docker pull $IMAGE_NAME:$IMAGE_TAG"
+   ```
+4. Убрать `--no-push` в сборке и настроить публикацию в registry.
+
 ## Лицензия
 
 Учебный проект, распространяется свободно.
