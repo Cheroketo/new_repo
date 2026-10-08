@@ -401,6 +401,27 @@ curl -f http://test.example.local:8080/health
    ```
 4. Убрать `--no-push` в сборке и настроить публикацию в registry.
 
+## 📖 Документация API
+
+Swagger UI публикуется **автоматически** на GitHub Pages при push в `main`.
+
+- **Опубликовано:** https://cheroketo.github.io/new_repo/api/
+- **OpenAPI JSON:** https://cheroketo.github.io/new_repo/api/openapi.json
+- **Workflow:** `.github/workflows/publish-api-docs.yaml` (job'ы `build` + `deploy`)
+
+`openapi.json` **генерируется в CI** через `app.openapi()` — не хранится в репозитории. Опубликованная схема соответствует коммиту, который запустил workflow.
+
+### Ручной запуск
+
+GitHub → Actions → **Publish API documentation** → **Run workflow** → ветка `main`.
+
+### Локальная проверка
+
+```bash
+python scripts/export_openapi.py --output /tmp/openapi.json
+python -m json.tool /tmp/openapi.json | head
+```
+
 ## Лицензия
 
 Учебный проект, распространяется свободно.
