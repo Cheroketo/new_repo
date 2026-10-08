@@ -1,0 +1,63 @@
+name: Publish API documentation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - "src/**"
+      - "scripts/**"
+      - "docs/**"
+      - "requirements.txt"
+      - ".github/workflows/publish-api-docs.yaml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build static docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Build static documentation
+        run: |
+          rm -rf site
+          mkdir -p site/api
+          cp docs/index.html site/index.html
+          cp -R docs/api/. site/api/
+          python scripts/export_openapi.py --output site/api/openapi.json
+          test -s site/api/openapi.json
+          python -m json.tool site/api/openapi.json > /dev/null
+          test -f site/api/index.html
+          test -f site/api/swagger-ui.css
+          test -f site/api/swagger-ui-bundle.js
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
