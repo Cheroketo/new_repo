@@ -1,5 +1,7 @@
 """FastAPI-приложение: HTTP-интерфейс над ML-моделью."""
 from fastapi import FastAPI, HTTPException
+from app.prediction.service import predict_and_notify
+
 from src import model_service
 from app.schemas import HealthResponse, PredictRequest, PredictResponse
 from src.model_service import (
@@ -40,11 +42,13 @@ def predict(request: PredictRequest) -> PredictResponse:
         request.petal_length,
         request.petal_width,
     ]]
+
     try:
-        predicted_class = predict_one(features)
+        predicted_class, class_name = predict_and_notify(features)
     except FileNotFoundError as exc:
-        raise HTTPException(status_code=503, detail=str(exc))
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
     return PredictResponse(
         prediction=predicted_class,
-        class_name=predict_class_name(predicted_class),
+        class_name=class_name,
     )
