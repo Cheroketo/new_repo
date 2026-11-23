@@ -1,14 +1,10 @@
 """FastAPI-приложение: HTTP-интерфейс над ML-моделью."""
 from fastapi import FastAPI, HTTPException
-from app.prediction.service import predict_and_notify
 
-from src import model_service
+from app.notification_client import NotificationIntegrationError
+from app.prediction.service import predict_and_notify
 from app.schemas import HealthResponse, PredictRequest, PredictResponse
-from src.model_service import (
-    FEATURE_ORDER,
-    predict_class_name,
-    predict_one,
-)
+from src import model_service
 
 app = FastAPI(
     title="ML Integration API",
@@ -21,7 +17,6 @@ app = FastAPI(
 def health() -> HealthResponse:
     """Состояние сервиса и признак готовности модели."""
     try:
-        from src import model_service
         model_service._load_model()
         model_ready = True
     except FileNotFoundError:
@@ -47,6 +42,9 @@ def predict(request: PredictRequest) -> PredictResponse:
         predicted_class, class_name = predict_and_notify(features)
     except FileNotFoundError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+    except NotificationIntegrationError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
 
     return PredictResponse(
         prediction=predicted_class,
